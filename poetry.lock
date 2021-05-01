@@ -84,7 +84,7 @@ python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
 
 [[package]]
 name = "eventual"
-version = "0.2.0"
+version = "0.3.1"
 description = ""
 category = "main"
 optional = false
@@ -94,6 +94,9 @@ python-versions = ">=3.8,<4.0"
 aio-pika = ">=6.8.0,<7.0.0"
 orjson = ">=3.5.2,<4.0.0"
 tortoise-orm = {version = ">=0.17.2,<0.18.0", extras = ["asyncpg"]}
+
+[package.extras]
+rmq = ["eventual-rmq (>=0,<1)"]
 
 [[package]]
 name = "idna"
@@ -275,7 +278,7 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "87129c2c170d4d8f47b7cd19dd6b736a032a2f855f562d29277640b7623731e1"
+content-hash = "d016eb1faf7e2d874325b19f18bfb2822921635535cdedf3203a33490a792848"
 
 [metadata.files]
 aio-pika = [
@@ -320,8 +323,8 @@ colorama = [
     {file = "colorama-0.4.4.tar.gz", hash = "sha256:5941b2b48a20143d2267e95b1c2a7603ce057ee39fd88e7329b0c292aa16869b"},
 ]
 eventual = [
-    {file = "eventual-0.2.0-py3-none-any.whl", hash = "sha256:2a6f767e1678301ea780250901528975f7f82a079249b73fa7910bd59fe154dc"},
-    {file = "eventual-0.2.0.tar.gz", hash = "sha256:ff79d51ec9ecfd388f7c2bef6dfc21b225eb2ddf18ba31b19bb8f4eb1164076f"},
+    {file = "eventual-0.3.1-py3-none-any.whl", hash = "sha256:98d58a3856375afb727aef4e915daf57ea8d269d9cc3b2453b99d82208485d54"},
+    {file = "eventual-0.3.1.tar.gz", hash = "sha256:05c48a4c8e086268fff975a01a5c38a701033d3b65438d2195d4b816d6bbd9e5"},
 ]
 idna = [
     {file = "idna-3.1-py3-none-any.whl", hash = "sha256:5205d03e7bcbb919cc9c19885f9920d622ca52448306f2377daede5cf3faac16"},

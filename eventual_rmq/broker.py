@@ -3,7 +3,7 @@ from typing import AsyncIterable, AsyncGenerator, Optional, Callable
 import aio_pika
 import orjson
 
-from eventual.dispatch import Message, MessageBroker, EventBody
+from eventual.dispatch.abc import Message, MessageBroker, EventBody
 
 
 class RmqMessage(Message):
