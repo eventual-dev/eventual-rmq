@@ -1,11 +1,11 @@
 [tool.poetry]
 name = "eventual-rmq"
-version = "0.2.0"
+version = "0.2.1"
 description = ""
 authors = ["Ivan Dmitriesvkii <ivan.dmitrievsky@gmail.com>"]
 
 [tool.poetry.dependencies]
-python = "^3.8"
+python = "^3.7"
 eventual = "^0"
 aio-pika = "^6.8.0"
 orjson = "^3.5.2"
