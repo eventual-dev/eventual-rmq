@@ -1,9 +1,9 @@
-from typing import AsyncIterable, AsyncGenerator, Optional, Callable
+from typing import AsyncIterable, AsyncGenerator, Optional, Callable, Any
 
 import aio_pika
 import orjson
 
-from eventual.dispatch.abc import Message, MessageBroker, EventBody
+from eventual.dispatch.abc import Message, MessageBroker, EventBody, EventStore
 
 
 class RmqMessage(Message):
@@ -12,7 +12,7 @@ class RmqMessage(Message):
         self._message = message
 
     @property
-    def body(self) -> EventBody:
+    def event_body(self) -> EventBody:
         return self._body
 
     def acknowledge(self):
@@ -21,23 +21,25 @@ class RmqMessage(Message):
 
 class RmqMessageBroker(MessageBroker):
     def __init__(
-            self,
-            amqp_dsn: str,
-            amqp_exchange: str,
-            amqp_queue: str,
-            routing_key_from_type: Optional[Callable[[str], str]] = None,
+        self,
+        event_store: EventStore[Any],
+        amqp_dsn: str,
+        amqp_exchange: str,
+        amqp_queue: str,
+        routing_key_from_subject: Optional[Callable[[str], str]] = None,
     ):
+        super().__init__(event_store)
         self.amqp_dsn = amqp_dsn
         self.amqp_exchange = amqp_exchange
         self.amqp_queue = amqp_queue
 
-        def default_routing_key_from_type(event_type: str) -> str:
-            return f"{self.amqp_queue}.{event_type}"
+        def default_routing_key_from_subject(subject: str) -> str:
+            return f"{self.amqp_queue}.{subject}"
 
-        if routing_key_from_type is None:
-            routing_key_from_type = default_routing_key_from_type
+        if routing_key_from_subject is None:
+            routing_key_from_subject = default_routing_key_from_subject
 
-        self.routing_key_from_type = routing_key_from_type
+        self.routing_key_from_subject = routing_key_from_subject
 
     async def _message_stream(self, connection) -> AsyncGenerator[RmqMessage, None]:
         channel: aio_pika.Channel = await connection.channel()
@@ -54,7 +56,7 @@ class RmqMessageBroker(MessageBroker):
                 async for message in queue_iter:
                     yield RmqMessage(message)
 
-    async def message_stream(self) -> AsyncIterable[RmqMessage]:
+    async def message_receive_stream(self) -> AsyncIterable[RmqMessage]:
         connection: aio_pika.RobustConnection = await aio_pika.connect_robust(
             self.amqp_dsn
         )
@@ -62,7 +64,7 @@ class RmqMessageBroker(MessageBroker):
         async with connection:
             return self._message_stream(connection)
 
-    async def send_event_body_stream(self, event_body_stream: AsyncIterable[EventBody]):
+    async def send_event_body_stream(self):
         connection: aio_pika.RobustConnection = await aio_pika.connect_robust(
             self.amqp_dsn
         )
@@ -74,13 +76,15 @@ class RmqMessageBroker(MessageBroker):
             exchange = await channel.declare_exchange(
                 self.amqp_exchange, aio_pika.ExchangeType.FANOUT
             )
-
-            async for event_body in event_body_stream:
-                event_type = event_body["type"]
-                await exchange.publish(
-                    aio_pika.Message(
-                        body=orjson.dumps(event_body),
-                        delivery_mode=aio_pika.DeliveryMode.PERSISTENT,
-                    ),
-                    routing_key=self.routing_key_from_type(event_type),
-                )
+            async with self.event_store.confirmation_send_stream:
+                async with self.event_store.unconfirmed_receive_stream:
+                    async for event_body in self.event_store.unconfirmed_receive_stream:
+                        subject = event_body["_subject"]
+                        await exchange.publish(
+                            aio_pika.Message(
+                                body=orjson.dumps(event_body),
+                                delivery_mode=aio_pika.DeliveryMode.PERSISTENT,
+                            ),
+                            routing_key=self.routing_key_from_subject(subject),
+                        )
+                        await self.event_store.confirmation_send_stream.send(None)

@@ -29,6 +29,24 @@ yarl = "*"
 develop = ["aiomisc (>=11.0,<12.0)", "async-generator", "coverage (!=4.3)", "coveralls", "pylava", "pytest", "pytest-cov", "tox (>=2.4)"]
 
 [[package]]
+name = "anyio"
+version = "3.0.1"
+description = "High level compatibility layer for multiple asynchronous event loop implementations"
+category = "main"
+optional = false
+python-versions = ">=3.6.2"
+
+[package.dependencies]
+idna = ">=2.8"
+sniffio = ">=1.1"
+typing-extensions = {version = "*", markers = "python_version < \"3.8\""}
+
+[package.extras]
+doc = ["sphinx-rtd-theme", "sphinx-autodoc-typehints (>=1.2.0)"]
+test = ["coverage[toml] (>=4.5)", "hypothesis (>=4.0)", "pytest (>=6.0)", "trustme", "uvloop (<0.15)", "uvloop (>=0.15)"]
+trio = ["trio (>=0.16)"]
+
+[[package]]
 name = "atomicwrites"
 version = "1.4.0"
 description = "Atomic file writes."
@@ -60,11 +78,14 @@ python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
 
 [[package]]
 name = "eventual"
-version = "0.4.2"
+version = "0.5.0"
 description = ""
 category = "main"
 optional = false
 python-versions = ">=3.7,<4.0"
+
+[package.dependencies]
+anyio = ">=3.0.1,<4.0.0"
 
 [package.extras]
 rmq = ["eventual-rmq (>=0,<1)"]
@@ -194,6 +215,14 @@ checkqa-mypy = ["mypy (==v0.761)"]
 testing = ["argcomplete", "hypothesis (>=3.56)", "mock", "nose", "requests", "xmlschema"]
 
 [[package]]
+name = "sniffio"
+version = "1.2.0"
+description = "Sniff out which async library your code is running under"
+category = "main"
+optional = false
+python-versions = ">=3.5"
+
+[[package]]
 name = "typing-extensions"
 version = "3.10.0.0"
 description = "Backported and Experimental Type Hints for Python 3.5+"
@@ -248,6 +277,10 @@ aiormq = [
     {file = "aiormq-3.3.1-py3-none-any.whl", hash = "sha256:e584dac13a242589aaf42470fd3006cb0dc5aed6506cbd20357c7ec8bbe4a89e"},
     {file = "aiormq-3.3.1.tar.gz", hash = "sha256:8218dd9f7198d6e7935855468326bbacf0089f926c70baa8dd92944cb2496573"},
 ]
+anyio = [
+    {file = "anyio-3.0.1-py3-none-any.whl", hash = "sha256:ed71f7542ef39875b65def219794d9dcb0a48c571317b13612c12b1f292701b5"},
+    {file = "anyio-3.0.1.tar.gz", hash = "sha256:1ef7622396ab55829d4236a6f75e2199df6d26a4ba79bea0cb942a5fd2f79a23"},
+]
 atomicwrites = [
     {file = "atomicwrites-1.4.0-py2.py3-none-any.whl", hash = "sha256:6d1784dea7c0c8d4a5172b6c620f40b6e4cbfdf96d783691f2e1302a7b88e197"},
     {file = "atomicwrites-1.4.0.tar.gz", hash = "sha256:ae70396ad1a434f9c7046fd2dd196fc04b12f9e91ffb859164193be8b6168a7a"},
@@ -261,8 +294,8 @@ colorama = [
     {file = "colorama-0.4.4.tar.gz", hash = "sha256:5941b2b48a20143d2267e95b1c2a7603ce057ee39fd88e7329b0c292aa16869b"},
 ]
 eventual = [
-    {file = "eventual-0.4.2-py3-none-any.whl", hash = "sha256:74ea4c1a5073c19c07a33e5c41a709115960c52063a4f828bf00cf1bacb627db"},
-    {file = "eventual-0.4.2.tar.gz", hash = "sha256:2e0e8e9bc071ff420ab0664e6fc1cf4ab74dbdcd80edbec00dab961d4e347a9c"},
+    {file = "eventual-0.5.0-py3-none-any.whl", hash = "sha256:dad2823ef024c24526ed3b36cb39728623cc4e99c80d77b0993b123cb0d1be1e"},
+    {file = "eventual-0.5.0.tar.gz", hash = "sha256:63537912d3da49ca064814ca400cd2e466b4bdc354efa9fe31262e6cb02443bf"},
 ]
 idna = [
     {file = "idna-3.1-py3-none-any.whl", hash = "sha256:5205d03e7bcbb919cc9c19885f9920d622ca52448306f2377daede5cf3faac16"},
@@ -363,6 +396,10 @@ pyparsing = [
 pytest = [
     {file = "pytest-5.4.3-py3-none-any.whl", hash = "sha256:5c0db86b698e8f170ba4582a492248919255fcd4c79b1ee64ace34301fb589a1"},
     {file = "pytest-5.4.3.tar.gz", hash = "sha256:7979331bfcba207414f5e1263b5a0f8f521d0f457318836a7355531ed1a4c7d8"},
+]
+sniffio = [
+    {file = "sniffio-1.2.0-py3-none-any.whl", hash = "sha256:471b71698eac1c2112a40ce2752bb2f4a4814c22a54a3eed3676bc0f5ca9f663"},
+    {file = "sniffio-1.2.0.tar.gz", hash = "sha256:c4666eecec1d3f50960c6bdf61ab7bc350648da6c126e3cf6898d8cd4ddcd3de"},
 ]
 typing-extensions = [
     {file = "typing_extensions-3.10.0.0-py2-none-any.whl", hash = "sha256:0ac0f89795dd19de6b97debb0c6af1c70987fd80a2d62d1958f7e56fcc31b497"},
