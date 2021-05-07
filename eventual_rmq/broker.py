@@ -2,6 +2,7 @@ from typing import AsyncIterable, AsyncGenerator, Optional, Callable, Any
 
 import aio_pika
 import orjson
+from anyio.streams.memory import MemoryObjectReceiveStream, MemoryObjectSendStream
 
 from eventual.dispatch.abc import Message, MessageBroker, EventBody, EventStore
 
@@ -22,13 +23,11 @@ class RmqMessage(Message):
 class RmqMessageBroker(MessageBroker):
     def __init__(
         self,
-        event_store: EventStore[Any],
         amqp_dsn: str,
         amqp_exchange: str,
         amqp_queue: str,
         routing_key_from_subject: Optional[Callable[[str], str]] = None,
     ):
-        super().__init__(event_store)
         self.amqp_dsn = amqp_dsn
         self.amqp_exchange = amqp_exchange
         self.amqp_queue = amqp_queue
@@ -62,9 +61,25 @@ class RmqMessageBroker(MessageBroker):
         )
 
         async with connection:
-            return self._message_stream(connection)
+            channel: aio_pika.Channel = await connection.channel()
+            async with channel:
+                exchange = await channel.declare_exchange(
+                    self.amqp_exchange, aio_pika.ExchangeType.FANOUT
+                )
+                queue: aio_pika.Queue = await channel.declare_queue(
+                    self.amqp_queue, durable=True
+                )
+                await queue.bind(exchange)
 
-    async def send_event_body_stream(self):
+                async with queue.iterator() as queue_iter:
+                    async for message in queue_iter:
+                        yield RmqMessage(message)
+
+    async def send_event_body_stream(
+        self,
+        event_body_stream: MemoryObjectReceiveStream[EventBody],
+        confirmation_send_stream: MemoryObjectSendStream[EventBody],
+    ):
         connection: aio_pika.RobustConnection = await aio_pika.connect_robust(
             self.amqp_dsn
         )
@@ -76,9 +91,9 @@ class RmqMessageBroker(MessageBroker):
             exchange = await channel.declare_exchange(
                 self.amqp_exchange, aio_pika.ExchangeType.FANOUT
             )
-            async with self.event_store.confirmation_send_stream:
-                async with self.event_store.unconfirmed_receive_stream:
-                    async for event_body in self.event_store.unconfirmed_receive_stream:
+            async with confirmation_send_stream:
+                async with event_body_stream:
+                    async for event_body in event_body_stream:
                         subject = event_body["_subject"]
                         await exchange.publish(
                             aio_pika.Message(
@@ -87,4 +102,6 @@ class RmqMessageBroker(MessageBroker):
                             ),
                             routing_key=self.routing_key_from_subject(subject),
                         )
-                        await self.event_store.confirmation_send_stream.send(None)
+                        await confirmation_send_stream.send(event_body)
+                        print("RMQ IT")
+                    print("RMQ")
