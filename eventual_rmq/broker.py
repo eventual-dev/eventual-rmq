@@ -1,10 +1,10 @@
-from typing import AsyncIterable, AsyncGenerator, Optional, Callable, Any
+from typing import AsyncIterable, Callable, Optional
 
 import aio_pika
 import orjson
 from anyio.streams.memory import MemoryObjectReceiveStream, MemoryObjectSendStream
-
-from eventual.dispatch.abc import Message, MessageBroker, EventBody, EventStore
+from eventual.broker import Message, MessageBroker
+from eventual.model import EventBody
 
 
 class RmqMessage(Message):
@@ -16,7 +16,7 @@ class RmqMessage(Message):
     def event_body(self) -> EventBody:
         return self._body
 
-    def acknowledge(self):
+    def acknowledge(self) -> None:
         self._message.ack()
 
 
@@ -39,21 +39,6 @@ class RmqMessageBroker(MessageBroker):
             routing_key_from_subject = default_routing_key_from_subject
 
         self.routing_key_from_subject = routing_key_from_subject
-
-    async def _message_stream(self, connection) -> AsyncGenerator[RmqMessage, None]:
-        channel: aio_pika.Channel = await connection.channel()
-        async with channel:
-            exchange = await channel.declare_exchange(
-                self.amqp_exchange, aio_pika.ExchangeType.FANOUT
-            )
-            queue: aio_pika.Queue = await channel.declare_queue(
-                self.amqp_queue, durable=True
-            )
-            await queue.bind(exchange)
-
-            async with queue.iterator() as queue_iter:
-                async for message in queue_iter:
-                    yield RmqMessage(message)
 
     async def message_receive_stream(self) -> AsyncIterable[RmqMessage]:
         connection: aio_pika.RobustConnection = await aio_pika.connect_robust(
@@ -79,7 +64,7 @@ class RmqMessageBroker(MessageBroker):
         self,
         event_body_stream: MemoryObjectReceiveStream[EventBody],
         confirmation_send_stream: MemoryObjectSendStream[EventBody],
-    ):
+    ) -> None:
         connection: aio_pika.RobustConnection = await aio_pika.connect_robust(
             self.amqp_dsn
         )
